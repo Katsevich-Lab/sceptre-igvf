@@ -18,7 +18,14 @@ I propose the following for the inference module:
 
 # `MuData` structure
 
-We will need to specify precisely how the `MuData` object should be formatted. The current [`MuData` formatting guidelines](https://docs.google.com/document/d/1Y7LThEF4rPT5DnzwZnQ5uIek-X0BqZorLI5Mm8A8PF4/edit#heading=h.ut379ivr6x0a) do not specify naming conventions precisely enough. In what follows, I propose an example of a more precise specification of the `MuData` object structure. To illustrate, I will use the subset of the Gasperini dataset. 
+We will need to specify precisely how the `MuData` object should be formatted. The current [`MuData` formatting guidelines](https://docs.google.com/document/d/1Y7LThEF4rPT5DnzwZnQ5uIek-X0BqZorLI5Mm8A8PF4/edit#heading=h.ut379ivr6x0a) do not specify naming conventions precisely enough, and which fields are mandatory versus which fields are optional. Lucas's [sample Gasperini `MuData` object](https://github.com/IGVF-CRISPR/Pipeline_Gasperini_2019/tree/main) is a good starting point, but it has the following limitations:
+
+- It does not include negative control gRNAs.
+- It does not include the gRNA-to-cell assignments.
+- It does not include the data frame for the results of an analysis method.
+- Certain naming choices conflict with the `MuData` formatting guidelines document.
+
+In what follows, I propose an example of a `MuData` object structure that addresses some of the above limitations. To illustrate, I will use a subset of the Gasperini dataset. Note that this subset is different from Lucas's. For example, it contains non-targeting gRNAs. The `MuData` structure itself is inspired by Lucas's but includes some additions, such as the gRNA-to-cell assignments and the data frame for the results of an analysis method.
 
 ```{python, warning = FALSE}
 import mudata as md
@@ -83,8 +90,8 @@ The columns `gene_id` and `grna_target` specify what pairs of gene and targeted 
 
 # Items for discussion
 
-1. We need to work together to settle on the precise specification of the `MuData` format, not just for the inference task but also for upstream tasks like gRNA assignment.
+1. We need to work together to settle on the precise specification of the `MuData` format, not just for the inference task but also for upstream tasks like gRNA assignment. We might want to write Python and/or R functions that check whether a given `MuData` object conforms to whatever specification we end up deciding on. 
 
 2. Do we agree that we should test for association between *targeted elements* and gene expression rather than between *individual gRNAs* and gene expression? Should we also have an option to test the latter? I think the latter is adding unnecessary complication at this stage.
 
-3. The current `MuData` structure does not include any cell-wise covariates or QC metrics. We have discussed that there are certain cell-wise covariates that most methods would want to use, like library size. However, adding covariates to the `MuData` will require us to standardize more field names, and different methods might want to use different covariates. Therefore, I thought we could just leave it up to the individual methods to compute whichever covariates they require. 
+3. The current `MuData` structure does not include any cell-wise covariates or QC metrics. We have discussed that there are certain cell-wise covariates that most methods would want to use, like library size. However, adding covariates to the `MuData` will require us to standardize more field names, and different methods might want to use different covariates. Therefore, I thought we could just leave it up to the individual methods to compute whichever covariates they require.
