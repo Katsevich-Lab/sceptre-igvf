@@ -1,0 +1,66 @@
+---
+title: "SCEPTRE interoperability with MuData"
+author: "Gene Katsevich"
+date: "December 2, 2023"
+output: 
+  bookdown::pdf_document2:
+    toc: false
+urlcolor: blue
+---
+
+```{r, echo = FALSE}
+# set chunk options to cache
+knitr::opts_chunk$set(cache = TRUE, fig.pos = "H")
+```
+
+In this document, we present the `sceptreIGVF` package ([GitHub](https://github.com/Katsevich-Lab/sceptreIGVF)), which provides an interface between the `sceptre` package and `MuData` objects. At present, the `sceptreIGVF` package provides the following two functions:
+
+- `convert_mudata_to_sceptre_object()` converts a `MuData` object to a `sceptre_object`
+- `assign_grnas_sceptre()` inputs a `MuData` object, uses `sceptre` to assign gRNAs, and returns a new `MuData` object with another assay containing the gRNA assignments
+
+# Converting `MuData` to `sceptre_object`
+
+```{r, message = FALSE}
+# load libraries
+library(sceptreIGVF)
+library(MuData)
+library(MultiAssayExperiment)
+```
+
+Let us take the Gasperini pilot data as an example:
+```{r}
+# read in the MuData object
+gasperini_data_dir <- "~/code/research/Pipeline_Gasperini_2019/"
+gasperini_data_fp <- paste0(
+  gasperini_data_dir, 
+  "/mudata/Gasperini_2019_sample_pilot.h5mu"
+)
+gasperini_mudata <- readH5MU(gasperini_data_fp)
+gasperini_mudata
+```
+
+We can convert the `MuData` object to a `sceptre_object` using `convert_mudata_to_sceptre_object()`:
+```{r, message = FALSE}
+gasperini_sceptre_object <- convert_mudata_to_sceptre_object(gasperini_mudata)
+gasperini_sceptre_object
+```
+We could then apply the `sceptre` pipeline to this `sceptre_object`. However, we might be interested in integrating individual `sceptre` modules into our Nextflow pipeline. For this reason, we would like to have functions wrapping around `sceptre` that operate directly on `MuData` objects.
+
+# gRNA assignment based on `MuData` objects
+
+Going back to the initial `MuData` object, let us use `assign_grnas_sceptre()` to assign gRNAs based on the thresholding method:
+```{r}
+gasperini_mudata_updated <- assign_grnas_sceptre(
+  mudata = gasperini_mudata, 
+  method = "thresholding", 
+  threshold = 5
+)
+```
+
+The result is another `MuData` object with an additional assay containing the gRNA assignments:
+```{r}
+gasperini_mudata_updated
+```
+In the context of a Nextflow pipeline, the resulting `MuData` object could be written to disk using `MuData::writeH5MU()` and then read in by the next process in the pipeline.
+
+The function `sceptreIGVF::assign_grnas_sceptre()` has the same gRNA assignment options as `sceptre::assign_grnas()`: thresholding, maximum, and mixture. For documentation of these options, see the corresponding portion of the `sceptre` vignette [here](https://katsevich-lab.github.io/sceptre/articles/sceptre.html#sec-sceptre_assign_grnas). 

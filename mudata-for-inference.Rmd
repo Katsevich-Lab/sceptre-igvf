@@ -1,0 +1,88 @@
+---
+title: "CRISPR Jamboree 2024: Inference"
+author: "Gene Katsevich"
+date: "January 26, 2024"
+output: 
+  bookdown::pdf_document2:
+    toc: false
+urlcolor: blue
+---
+
+# Overview of datasets, inputs, and outputs
+
+I propose the following for the inference module:
+
+- **Datasets:** We should test on at least one high-MOI and one low-MOI dataset. I propose we try subsets of the [Gasperini](https://katsevich-lab.github.io/sceptre/reference/highmoi_example_data.html) (high-MOI) and [Papalexi](https://katsevich-lab.github.io/sceptre/reference/lowmoi_example_data.html) (low-MOI) datasets, which are built into the `sceptre` package. These datasets are available [on GitHub]().
+- **Input:** The input will be a `MuData` object with a certain set of minimum required fields (see more below), the sidedness of the test, and any additional arguments to the analysis method. 
+- **Output:** The output will be an updated `MuData` object, with the $p$-values and log fold-change estimates added in the `uns` field. 
+
+# `MuData` structure
+
+We will need to specify precisely how the `MuData` object should be formatted. The current [`MuData` formatting guidelines](https://docs.google.com/document/d/1Y7LThEF4rPT5DnzwZnQ5uIek-X0BqZorLI5Mm8A8PF4/edit#heading=h.ut379ivr6x0a) do not specify naming conventions precisely enough. In what follows, I propose an example of a more precise specification of the `MuData` object structure. To illustrate, I will use the subset of the Gasperini dataset. 
+
+```{python, warning = FALSE}
+import mudata as md
+import pandas as pd
+gasperini_data = md.read_h5mu("data/gasperini_subset.h5mu")
+gasperini_data
+```
+
+We can see that this object has three modalities, named `gene` (for gene expression), `guide` (for gRNA expression), and `guide_assignment` (for binary gRNA-to-cell assignments). We need to make sure these names are standardized. 
+
+## Gene expression modality 
+
+The gene expression modality (`gene`) should contain the raw RNA UMI counts; we will leave any normalization to each of the individual analysis methods. The variable names are the ENSEMBL gene IDs: 
+```{python}
+gasperini_data['gene'].var_names[:5].tolist()
+```
+The gene names can be optionally be provided in a variable called `symbol`: 
+```{python}
+gasperini_data['gene'].var
+```
+We need to choose a standardized name for the variable storing the gene names; I chose `symbol` because this is what DACC appears to use. 
+
+## gRNA expression modality 
+
+The gRNA expression modality (`guide`) should contain the raw gRNA UMI counts; we will leave any normalization to each of the individual analysis methods. Within the `guide` modality, the variable names are the gRNA IDs: 
+```{python}
+gasperini_data['guide'].var_names[:5].tolist()
+```
+The variables in this modality are similar to the [per-guide metadata format](https://docs.google.com/document/d/1tib4To6XjMYTxeBRCgvgRD5JCq2XsmcJDjMcL2AGzso/edit) we developed:
+```{python}
+gasperini_data['guide'].var
+```
+First, we must specify for each gRNA whether it is `targeting`. (Here this boolean variable shows up as 0/1; probably we should change this.) Next, we must specify for each gRNA what exactly it targets (which gene, which putative enhancer, etc). This is probably similar to `intended_target_name` in the per-guide metadata format but I wasn't sure, so I named it `guide_target` (we should come to a consensus on this). The reason this is required is because we it is most meaningful to test for associations between *targeted elements* and gene expression rather than between *individual gRNAs* and gene expression. Therefore, we must know which guides target the same element. We should have a reserved string for the `guide_target` for non-targeting guides; I propose `non-targeting`. Optionally, we can specify the genomic coordinates of the region targeted by the guide. We should have standard placeholder values genomic coordinates of non-targeting guides. I propose the empty string for chromosome and `-9` for start and end coordinates. 
+
+## gRNA assignment modality 
+
+The gRNA assignment modality (`guide_assignment`) should contain the binary gRNA-to-cell assignments. The variable names are again the gRNA IDs: 
+```{python}
+gasperini_data['guide_assignment'].var_names[:5].tolist()
+```
+There are no required `var`s for this modality, because the relevant metadata are already in the `guide` modality.
+
+## Other fields
+
+There are two other fields of the `gasperini_data` object, `obs` and `uns`. The `obs` field contains cell metadata not specific to any modality. The most important such metadata is `batch`. 
+```{python}
+gasperini_data.obs
+```
+
+I propose we have a required variable called `batch` that specifies the batch for each cell. Even if the data only has one batch, we can have a variable with just one value. The other field is `uns`, which contains unstructured metadata. I have included two fields in `uns`: `moi` and `inference_results`. The `moi` field specifies the MOI of the experiment (`high` or `low`):
+```{python}
+gasperini_data.uns['moi'][0]
+```
+
+I propose for this to be a mandatory field. The `inference_results` field is where the results of the inference will be stored:
+```{python}
+pd.set_option('display.max_columns', None)
+pd.DataFrame(gasperini_data.uns['inference_results'])
+```
+
+The columns `gene_id` and `grna_target` specify what pairs of gene and targeted element to test for association. The columns `log_2_FC` and `p_value` will be filled in by the inference method, and should be initialized with placeholders such as `-9`. Finally, the optional column `pair_type` specifies the type of pair being tested, e.g. positive control or discovery pair. 
+
+# Items for discussion
+
+1. We need to work together to settle on the precise specification of the `MuData` format, not just for the inference task but also for upstream tasks like gRNA assignment.
+
+2. Do we agree that we should test for association between *targeted elements* and gene expression rather than between *individual gRNAs* and gene expression? Should we also have an option to test the latter? I think the latter is adding unnecessary complication at this stage.
