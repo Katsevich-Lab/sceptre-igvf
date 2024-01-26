@@ -12,7 +12,7 @@ urlcolor: blue
 
 I propose the following for the inference module:
 
-- **Datasets:** We should test on at least one high-MOI and one low-MOI dataset. I propose we try subsets of the [Gasperini](https://katsevich-lab.github.io/sceptre/reference/highmoi_example_data.html) (high-MOI) and [Papalexi](https://katsevich-lab.github.io/sceptre/reference/lowmoi_example_data.html) (low-MOI) datasets, which are built into the `sceptre` package. These datasets are available [on GitHub]().
+- **Datasets:** We should test on at least one high-MOI and one low-MOI dataset. I propose we try subsets of the [Gasperini](https://katsevich-lab.github.io/sceptre/reference/highmoi_example_data.html) (high-MOI) and [Papalexi](https://katsevich-lab.github.io/sceptre/reference/lowmoi_example_data.html) (low-MOI) datasets, which are built into the `sceptre` package. These datasets are available [on GitHub](https://github.com/Katsevich-Lab/sceptre-igvf/tree/main/data).
 - **Input:** The input will be a `MuData` object with a certain set of minimum required fields (see more below), the sidedness of the test, and any additional arguments to the analysis method. 
 - **Output:** The output will be an updated `MuData` object, with the $p$-values and log fold-change estimates added in the `uns` field. 
 
