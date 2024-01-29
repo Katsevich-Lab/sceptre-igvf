@@ -1117,6 +1117,31 @@
       ],
       "Hash": "a623a2239e642806158bc4dc3f51565d"
     },
+    "ondisc": {
+      "Package": "ondisc",
+      "Version": "0.0.5",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "ondisc",
+      "RemoteUsername": "timothy-barry",
+      "RemoteRef": "5adcc537664aada08c3e79f08f2a944a0d31598d",
+      "RemoteSha": "5adcc537664aada08c3e79f08f2a944a0d31598d",
+      "Requirements": [
+        "Matrix",
+        "R",
+        "Rcpp",
+        "Rhdf5lib",
+        "crayon",
+        "data.table",
+        "dplyr",
+        "magrittr",
+        "methods",
+        "readr",
+        "rhdf5"
+      ],
+      "Hash": "6ef80707cf1a9186740a0deeb627e044"
+    },
     "openssl": {
       "Package": "openssl",
       "Version": "2.1.1",
@@ -1416,7 +1441,7 @@
       "RemoteUsername": "katsevich-lab",
       "RemoteRepo": "sceptreIGVF",
       "RemoteRef": "main",
-      "RemoteSha": "85287352cd9e37c531677c5a4f1e8a6bf2ba50ca",
+      "RemoteSha": "561319aaa2846730a3302b7c0f44d7587b9b6039",
       "Requirements": [
         "Matrix",
         "MultiAssayExperiment",
@@ -1428,7 +1453,7 @@
         "sceptre",
         "tibble"
       ],
-      "Hash": "aae75814af1f018bd64b7f15af194def"
+      "Hash": "e3f07799cda67489aa471288f24a076d"
     },
     "selectr": {
       "Package": "selectr",

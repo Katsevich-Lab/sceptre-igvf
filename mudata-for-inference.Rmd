@@ -31,6 +31,9 @@ In what follows, I propose an example of a `MuData` object structure that addres
 import mudata as md
 import pandas as pd
 gasperini_data = md.read_h5mu("data/gasperini_subset.h5mu")
+gasperini_data_2 = md.read_h5mu("data/gasperini_subset_2.h5mu")
+gasperini_data["guide"].var.loc[:, "targeting"] = gasperini_data["guide"].var["targeting"].astype("object").astype(bool)
+gasperini_data.write_h5mu("data/gasperini_subset_2.h5mu")
 gasperini_data
 ```
 
