@@ -388,6 +388,26 @@
       ],
       "Hash": "1716e201f81ced0f456dd5ec85fe20f8"
     },
+    "SeuratData": {
+      "Package": "SeuratData",
+      "Version": "0.2.2",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "seurat-data",
+      "RemoteUsername": "satijalab",
+      "RemoteRef": "d6a8ce61ccb21a3b204f194d07009772c822791d",
+      "RemoteSha": "d6a8ce61ccb21a3b204f194d07009772c822791d",
+      "Requirements": [
+        "R",
+        "cli",
+        "crayon",
+        "rappdirs",
+        "stats",
+        "utils"
+      ],
+      "Hash": "cdfd9161e8b8ce7d98c3d77b3e1f36fb"
+    },
     "SingleCellExperiment": {
       "Package": "SingleCellExperiment",
       "Version": "1.24.0",
@@ -1441,9 +1461,10 @@
       "RemoteUsername": "katsevich-lab",
       "RemoteRepo": "sceptreIGVF",
       "RemoteRef": "main",
-      "RemoteSha": "561319aaa2846730a3302b7c0f44d7587b9b6039",
+      "RemoteSha": "edcd748b751ecc99968cbfd6e3de5f3c5cb141d4",
       "Requirements": [
         "Matrix",
+        "MuData",
         "MultiAssayExperiment",
         "R",
         "SingleCellExperiment",
@@ -1451,9 +1472,10 @@
         "dplyr",
         "methods",
         "sceptre",
+        "stats",
         "tibble"
       ],
-      "Hash": "e3f07799cda67489aa471288f24a076d"
+      "Hash": "c254acd9b8c84583f761416342ee1347"
     },
     "selectr": {
       "Package": "selectr",
