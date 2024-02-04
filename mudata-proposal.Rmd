@@ -22,48 +22,48 @@ pd.set_option('display.max_columns', None)
 
 ### Input
 ```{python, warning = FALSE}
-grna_assignment_input = md.read_h5mu("data/gasperini_grna_assignment_input_minimal.h5mu")
-grna_assignment_input
+guide_assignment_input = md.read_h5mu("data/gasperini_guide_assignment_input_minimal.h5mu")
+guide_assignment_input
 ```
 The minimal input `MuData` object for gRNA assignment contains two modalities: `gene` and `guide`. The `gene` modality just needs to have a `.X` matrix containing the gene RNA UMI counts. The `guide` modality needs to have a `.X` matrix containing the gRNA UMI counts, as well as a `.var` data frame containing at least the Boolean variable `targeting` and the string `intended_target_name`:
 ```{python, warning = FALSE}
-grna_assignment_input['guide'].var.iloc[[0, 1, 20, 21, 30, 31]]
+guide_assignment_input['guide'].var.iloc[[0, 1, 20, 21, 30, 31]]
 ```
 Note that the `targeting` column is a string rather than a Boolean due to type compatibility issues involving R, Python, and HDF5. It can be cast to a Boolean if desired. Finally, the gRNA assignment input `MuData` object must contain an `uns` field called `moi` (`low` or `high`).
 
 ### Output
 
 ```{python, warning = FALSE}
-grna_assignment_output = md.read_h5mu("data/gasperini_grna_assignment_output_minimal.h5mu")
-grna_assignment_output
+guide_assignment_output = md.read_h5mu("data/gasperini_guide_assignment_output_minimal.h5mu")
+guide_assignment_output
 ```
-The minimal gRNA assignment output `MuData` object is the same as the input object, except it now has a `.layer` called `grna_assignments`, which is a binary assignment matrix of guides to cells.
+The minimal gRNA assignment output `MuData` object is the same as the input object, except it now has a `.layer` called `guide_assignment`, which is a binary assignment matrix of guides to cells.
 
 ## gRNA assignment (optional fields)
 
 ### Input
 
 ```{python, warning = FALSE}
-grna_assignment_input = md.read_h5mu("data/gasperini_grna_assignment_input.h5mu")
-grna_assignment_input
+guide_assignment_input = md.read_h5mu("data/gasperini_guide_assignment_input.h5mu")
+guide_assignment_input
 ```
 
 Optionally, the gRNA assignment input object can contain a top-level `obs` field containing cell-level information that is not specific to modality, such as batch information. Here is what it looks like for the Gasperini data:
 ```{python, warning = FALSE}
-grna_assignment_input.obs[['prep_batch', 'within_batch_chip', 'within_chip_lane']]
+guide_assignment_input.obs[['prep_batch', 'within_batch_chip', 'within_chip_lane']]
 ```
 The gRNA assignment input object may also include cellwise covariates for the `gene` modality, such as number of expressed genes and total RNA UMIs:
 ```{python, warning = FALSE}
-grna_assignment_input['gene'].obs
+guide_assignment_input['gene'].obs
 ```
 Next, the gRNA assignment input object may contain additional information about the genes:
 ```{python, warning = FALSE}
-grna_assignment_input['gene'].var
+guide_assignment_input['gene'].var
 ```
 Finally, the gRNA assignment input object may contain cellwise covariates for the `guide` modality and additional information about the guides beyond the two required fields `targeting` and `intended_target_name`:
 ```{python, warning = FALSE}
-grna_assignment_input['guide'].obs
-grna_assignment_input['guide'].var.iloc[[0, 1, 20, 21, 30, 31]]
+guide_assignment_input['guide'].obs
+guide_assignment_input['guide'].var.iloc[[0, 1, 20, 21, 30, 31]]
 ```
 
 # Inference
