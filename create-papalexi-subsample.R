@@ -95,7 +95,8 @@ sceptre_object_lowmoi <- sceptre_object_lowmoi |>
 # Convert to MuData inputs and outputs
 mudata_list_lowmoi <- sceptre_object_to_mudata_inputs_outputs(
   sceptre_object = sceptre_object_lowmoi,
-  num_discovery_pairs = NUM_DISCOVERY_PAIRS
+  num_discovery_pairs = NUM_DISCOVERY_PAIRS,
+  guide_capture_method = "direct capture"
 )
 
 # Save to disk

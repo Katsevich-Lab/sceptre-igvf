@@ -1461,7 +1461,7 @@
       "RemoteUsername": "katsevich-lab",
       "RemoteRepo": "sceptreIGVF",
       "RemoteRef": "main",
-      "RemoteSha": "23c3e5c57cdef754ea0f7fbc52eb9022a078a92b",
+      "RemoteSha": "76da2e896a10503b41908863c8477c2aef44e86a",
       "Requirements": [
         "Matrix",
         "MuData",
@@ -1475,7 +1475,7 @@
         "stats",
         "tibble"
       ],
-      "Hash": "65f1f4816c0f8ef83f72bbd7db66e27a"
+      "Hash": "0848b0b9f86c2607aed57e9b01ff5435"
     },
     "selectr": {
       "Package": "selectr",

@@ -210,7 +210,8 @@ sceptre_object_highmoi <- sceptre_object_highmoi |>
 mudata_list_highmoi <- sceptre_object_to_mudata_inputs_outputs(
   sceptre_object = sceptre_object_highmoi,
   num_discovery_pairs = NUM_DISCOVERY_PAIRS, 
-  gene_info = gene_info_subset
+  gene_info = gene_info_subset,
+  guide_capture_method = "CROP-seq"
 )
 
 # Save to disk

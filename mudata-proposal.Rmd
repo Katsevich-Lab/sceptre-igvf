@@ -25,11 +25,15 @@ pd.set_option('display.max_columns', None)
 guide_assignment_input = md.read_h5mu("data/gasperini_guide_assignment_input_minimal.h5mu")
 guide_assignment_input
 ```
-The minimal input `MuData` object for gRNA assignment contains two modalities: `gene` and `guide`. The `gene` modality just needs to have a `.X` matrix containing the gene RNA UMI counts. The `guide` modality needs to have a `.X` matrix containing the gRNA UMI counts, as well as a `.var` data frame containing at least the Boolean variable `targeting` and the string `intended_target_name`:
+The minimal input `MuData` object for guide assignment contains two modalities: `gene` and `guide`. The `gene` modality just needs to have a `.X` matrix containing the gene RNA UMI counts. The `guide` modality needs to have a `.X` matrix containing the gRNA UMI counts, as well as a `.var` data frame containing at least the Boolean variable `targeting` and the string `intended_target_name`:
 ```{python, warning = FALSE}
 guide_assignment_input['guide'].var.iloc[[0, 1, 20, 21, 30, 31]]
 ```
-Note that the `targeting` column is a string rather than a Boolean due to type compatibility issues involving R, Python, and HDF5. It can be cast to a Boolean if desired. Finally, the gRNA assignment input `MuData` object must contain an `uns` field called `moi` (`low` or `high`).
+Note that the `targeting` column is a string rather than a Boolean due to type compatibility issues involving R, Python, and HDF5. It can be cast to a Boolean if desired. Finally, the guide modality must contain `uns` fields called `moi` (`low` or `high`) and `capture_method` (`"CROP-seq"` or `"direct capture"`):
+```{python, warning = FALSE}
+guide_assignment_input['guide'].uns['capture_method'][0]
+guide_assignment_input['guide'].uns['moi'][0]
+```
 
 ### Output
 
@@ -77,7 +81,7 @@ Here is an example of a `MuData` object containing the minimal required fields f
 inference_input = md.read_h5mu("data/gasperini_inference_input_minimal.h5mu")
 inference_input
 ```
-This is the same as the minimal set of required fields for the output of the gRNA assignment module, except there is an extra field in `uns` called `pairs_to_test`:
+This is the same as the minimal set of required fields for the output of the gRNA assignment module, except there is also a global `uns` called `pairs_to_test`:
 ```{python, warning = FALSE}
 pd.DataFrame(inference_input.uns['pairs_to_test'])
 ```
