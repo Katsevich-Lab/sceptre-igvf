@@ -1,0 +1,275 @@
+---
+title: "IGVF CRISPR Jamboree 2024: Perturb-seq Inference (R)"
+author: "Gene Katsevich"
+date: "February 9, 2024"
+output: 
+  bookdown::pdf_document2:
+    toc: false
+urlcolor: blue
+---
+
+# Overview
+
+## Perturb-seq inference
+
+The goal of perturb-seq inference is to quantify the extent to which the perturbation of a given genomic element impacts the expression of a given gene. We allow a range of statistical interpretations of this task. In a frequentist framework, this task can be viewed as testing the null hypothesis that the perturbation of the genomic element has no effect on the gene's expression, or as estimating the effect size of the perturbation on the gene's expression. In a Bayesian framework, this task can be viewed as estimating the posterior probability of the presence of a non-zero effect, or as a posterior mean of the effect size. 
+
+## Jamboree goals
+
+The goal of the perturb-seq inference portion of the Jamboree is to implement a number of perturb-seq inference methodologies using common input and output formats. Following the Jamboree, these implementations will be added as modules to a Nextflow pipeline, which will then be used to benchmark their statistical and computational performance. This benchmarking effort will suggest best practices for perturb-seq inference, and will be used to inform the development of the IGVF perturb-seq analysis pipeline.
+
+## Data format overview
+
+The primary input to a perturb-seq inference module is a `MuData` object, which contains both the perturb-seq data and a set of element-gene pairs for which the inference is to be performed. The output of each method should be the same `MuData` object, except with an additional table containing one or more measures of association for each element-gene pair. The `MuData` format is an HDF5-based language-agnostic format compatible with import into both R and Python. Each `MuData` object will contain a minimal set of fields required for inference, and potentially one or more optional fields that provide additional information. For the purposes of this Jamboree, we have provided `MuData` objects for subsets of the Gasperini et al (2019) and Papalexi et al (2021) datasets. For each dataset, we have provided a minimal `MuData` object that contains just the required fields, as well as a more fleshed out object that contains additional optional fields.
+
+## Requested function API, documentation, and demonstration
+
+Please write a function in your language of choice with the following arguments: 
+
+- The first argument should be `mudata_input_fp`, a filepath to a `MuData` object.
+- The second argument should be `mudata_output_fp`, a filepath to an output `MuData` object.
+- There may be one or more additional arguments specific to your method. 
+
+The function should read the `MuData` object from `mudata_input_fp`, perform the inference, and write the resulting `MuData` object to `mudata_output_fp` (in R, via `MuData::readH5MU()`). The function should include documentation of any additional arguments used. Furthermore, please include a demonstration of the use of your function on at least one of the sample datasets provided, and a brief discussion of the results.
+
+# `MuData` format
+
+Let us walk through the input and output format specifications, from the perspective of R, using a subset of the Gasperini et al (2019) dataset as an example.
+
+```{R, warning = FALSE, message = FALSE}
+library(MuData)
+library(SummarizedExperiment)
+```
+
+## Required input fields
+
+We start with an example of the minimal `MuData` object required for perturb-seq inference.
+
+```{R, warning = FALSE}
+mudata_input_fp <- "data/gasperini_inference_input_minimal.h5mu"
+input_minimal <- readH5MU(mudata_input_fp)
+input_minimal
+```
+The minimal `MuData` object for perturb-seq inference contains two modalities: `gene` and `guide`. 
+
+### `gene` modality
+
+The minimal `gene` modality needs to just have one assay, whose name is the empty string, containing the RNA UMI counts:
+```{r}
+input_minimal[['gene']]
+```
+To bring it more in line with the typical `SummarizedExperiment`, we can rename the assay as `counts`:
+```{r}
+assayNames(input_minimal[['gene']]) <- 'counts'
+input_minimal[['gene']]
+assay(input_minimal[['gene']], 'counts')[1:2,1:2]
+```
+
+### `guide` modality
+
+After renaming the first assay of the `guide` modality, this modality must have assays `counts` and `guide_assignment` containing the gRNA UMI counts and binary gRNA assignments, respectively:
+```{r}
+assayNames(input_minimal[['guide']])[[1]] <- 'counts'
+input_minimal[['guide']]
+```
+We can view a couple rows and columns of each:
+```{r}
+cell_ids <- c("GCTTGAATCGAATGCT-1_1B_1_SI-GA-F2", 
+             "GGTGAAGCACCAGGCT-1_1A_6_SI-GA-E7")
+grna_ids <- c("GCCCTGCTACCCACTTACAG",
+              "ATGTAGAAGGAGACACCGGG")
+
+assay(input_minimal[['guide']], 'counts')[grna_ids, cell_ids]
+assay(input_minimal[['guide']], 'guide_assignment')[grna_ids, cell_ids]
+```
+In addition to the guide UMI counts and assignments, the `guide` modality must contain certain metadata information. This includes a `rowData()` data frame containing at least the binary variable `targeting` (`TRUE` if the guide targets a genomic element of interest or `FALSE` if it is safe- or non-targeting) and the string `intended_target_name` (the name of the genomic element targeted by the guide). 
+```{r}
+rowData(input_minimal[['guide']])[c(1, 2, 21, 22, 31, 32),]
+```
+Note that the `targeting` column is a string rather than a Boolean due to type compatibility issues involving R, Python, and HDF5. It can be cast to a Boolean if desired. 
+
+Finally, the guide modality must contain `metadata()` fields called `moi` (`low` or `high`) and `capture_method` (`"CROP-seq"` or `"direct capture"`):
+```{R}
+metadata(input_minimal[['guide']])
+```
+
+### Global `metadata`
+
+The input `MuData` object is also required to have a global `metadata` field named `pairs_to_test`, which is a data frame containing the pairs of elements (specified via `intended_target_name`) and genes (specified via `gene_id`) for which the inference is to be performed.
+```{r}
+metadata(input_minimal)$pairs_to_test |> as.data.frame() |> head()
+```
+
+## Optional input fields
+
+Next we consider optional fields that can be included in the input `MuData` object.
+
+```{r, warning = FALSE}
+mudata_input_fp = "data/gasperini_inference_input.h5mu"
+input_optional = readH5MU(mudata_input_fp)
+input_optional
+```
+### `gene` modality
+
+The `MuData` object may include cellwise covariates for the `gene` modality in `colData()`, such as number of genes with nonzero UMI counts (`num_expressed_genes`) and total RNA UMIs (`total_gene_umis`):
+```{r}
+colData(input_optional[['gene']])
+```
+
+The `MuData` object may include per-gene metadata in `rowData()`, such as the HGNC gene symbol (`symbol`), the gene chromosome (`chr`), start (`gene_start`), and end (`gene_end`) coordinates:
+```{r}
+rowData(input_optional[['gene']])
+```
+
+### `guide` modality
+
+The `MuData` object may include cellwise covariates for the `guide` modality in `colData()`, such as number of guides with nonzero UMI counts (`num_expressed_guides`) and total guide UMIs (`total_guide_umis`):
+```{r}
+colData(input_optional[['guide']])
+```
+
+The `MuData` object may include per-guide metadata in `rowData()` in addition to the required `targeting` and `intended_target_name` fields, such as the chromosome (`intended_target_chr`), start (`intended_target_start`), and end (`intended_target_end`) of the targeted element:
+```{r}
+rowData(input_optional[['guide']])[c(1, 2, 21, 22, 31, 32),]
+```
+
+### Global metadata
+
+Optionally, the `MuData` input object can contain a global `colData()` containing cell-level information that is not specific to modality, such as batch information. Here is what it looks like for the Gasperini data:
+```{r}
+colData(input_optional)
+```
+
+### Pairs to test 
+
+Optionally, the `pairs_to_test` field of the global metadata can have a third column: `pair_type`: 
+```{r}
+metadata(input_optional)$pairs_to_test |> as.data.frame() |> head()
+```
+This optional column classifies pairs based on whether they are intended to be positive controls (an association is known to exist), negative controls (an association is known not to exist), or discovery pairs (pairs where it is unknown whether an association exists). This information need not be used by the inference module, but it is useful for downstream analysis.
+
+## Output fields
+
+The output should be the same `MuData` object as the input, with the addition of a `test_results` field to the global `metadata`:
+```{r, warning = FALSE}
+mudata_output_fp <- "data/gasperini_inference_output.h5mu"
+output_optional <- readH5MU(mudata_output_fp)
+output_optional
+```
+
+```{r}
+metadata(output_optional)$test_results |> as.data.frame() |> head()
+```
+This is a data frame containing the same columns as the `pairs_to_test` data frame, plus at least one column containing a measure of the association for each pair. These columns can be `p_value`, `log2_fc`, `posterior_probability`, or any other measure of association.
+
+# Sample submission
+
+Here we present a sample Jamboree submission.
+
+## Function
+
+Here is a sample function that computes a $p$-value based on a Wilcoxon test:
+```{r}
+#' Wilcoxon test
+#'
+#' @param mudata_input_fp Path to input MuData
+#' @param mudata_output_fp Path to output MuData
+#' @param side The sidedness of the test (`left`, `right`, or `both`)
+#'
+#' @return This function is called for its side effect of writing the output MuData.
+compute_wilcoxon_test <- function(mudata_input_fp, mudata_output_fp, side) {
+  # Read input MuData
+  mudata <- MuData::readH5MU(mudata_input_fp)
+  # Rename primary assay to 'counts'
+  if(is.null(SummarizedExperiment::assayNames(mudata[['gene']]))){
+    SummarizedExperiment::assayNames(mudata[['gene']]) <- 'counts'    
+  } else{
+    SummarizedExperiment::assayNames(mudata[['gene']])[[1]] <- 'counts'  
+  }
+  SummarizedExperiment::assayNames(mudata[['guide']])[[1]] <- 'counts'
+  # Extract pairs to test and MOI
+  pairs_to_test <- MultiAssayExperiment::metadata(input_minimal)$pairs_to_test |> 
+    as.data.frame()
+  moi <- MultiAssayExperiment::metadata(input_minimal[["guide"]])$moi
+  # In low-MOI case, extract control cells as those containing an NT gRNA
+  if (moi == "low") {
+    non_targeting_guides <- SummarizedExperiment::rowData(mudata[["guide"]]) |>
+      as.data.frame() |>
+      dplyr::filter(targeting == "FALSE") |>
+      rownames()
+    nt_grna_presence <- SummarizedExperiment::assay(
+      mudata[["guide"]],
+      "guide_assignment"
+    )[non_targeting_guides, ] |>
+      apply(MARGIN = 2, FUN = max)
+    control_cells <- names(nt_grna_presence)[nt_grna_presence == 1]
+  }
+  # Initialize test results data frame based on pairs_to_test
+  test_results <- pairs_to_test |>
+    dplyr::mutate(p_value = NA_real_)
+  # Carry out the Wilcoxon test for each pair
+  for (pair_idx in 1:nrow(pairs_to_test)) {
+    # Extract the gene and element to be tested
+    gene_id <- pairs_to_test[pair_idx, "gene_id"]
+    intended_target_name <- pairs_to_test[pair_idx, "intended_target_name"]
+    # Find the set of treatment cells (i.e. cells with element targeted)
+    grnas_targeting_element <- SummarizedExperiment::rowData(mudata[["guide"]]) |>
+      as.data.frame() |>
+      dplyr::filter(intended_target_name == !!intended_target_name) |>
+      rownames()
+    element_targeted <- assay(
+      mudata[["guide"]],
+      "guide_assignment"
+    )[grnas_targeting_element, ] |>
+      apply(MARGIN = 2, FUN = max)
+    treatment_cells <- names(element_targeted)[element_targeted == 1]
+    # Set controls cells using the complement set in high MOI
+    if (moi == "high") {
+      control_cells <- names(element_targeted)[element_targeted == 0]
+    }
+    # extract expressions for treatment and control cells
+    treatment_expressions <- SummarizedExperiment::assay(
+      mudata[["gene"]],
+      "counts"
+    )[gene_id, treatment_cells]
+    control_expressions <- SummarizedExperiment::assay(
+      mudata[["gene"]],
+      "counts"
+    )[gene_id, control_cells]
+    # Map `side` argument to `alternative` argument required by `wilcox.test()`
+    alternative <- switch(side,
+      left = "less",
+      right = "greater",
+      both = "two.sided"
+    )
+    # Carry out the Wilcoxon test
+    test_results[pair_idx, "p_value"] <- stats::wilcox.test(
+      x = treatment_expressions,
+      y = control_expressions,
+      alternative = alternative
+    )$p.value
+  }
+  # Add output to MuData and write to disk
+  mudata_output <- mudata
+  MultiAssayExperiment::metadata(mudata_output)$test_results <- test_results
+  MuData::writeH5MU(mudata_output, mudata_output_fp)
+}
+```
+
+## Demonstration
+
+Here is a demonstration of this function on the Gasperini data:
+```{r, warning = FALSE}
+# Compute Wilcoxon test on the Gasperini data
+compute_wilcoxon_test(
+  mudata_input_fp = "data/gasperini_inference_input.h5mu",
+  mudata_output_fp = "data/gasperini_inference_output_wilcoxon.h5mu",
+  side = "left"
+)
+
+# Read results from disk
+output_wilcoxon <- MuData::readH5MU("data/gasperini_inference_output_wilcoxon.h5mu")
+
+# Print results
+metadata(output_wilcoxon)$test_results |> as.data.frame() |> head()
+```
