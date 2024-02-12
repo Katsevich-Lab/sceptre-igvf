@@ -22,7 +22,9 @@ pd.set_option('display.max_columns', None)
 
 ### Input
 ```{python, warning = FALSE}
-guide_assignment_input = md.read_h5mu("data/gasperini_guide_assignment_input_minimal.h5mu")
+guide_assignment_input = md.read_h5mu(
+  "data/guide_assignment/gasperini_guide_assignment_input_minimal.h5mu"
+)
 guide_assignment_input
 ```
 The minimal input `MuData` object for guide assignment contains two modalities: `gene` and `guide`. The `gene` modality just needs to have a `.X` matrix containing the gene RNA UMI counts. The `guide` modality needs to have a `.X` matrix containing the gRNA UMI counts, as well as a `.var` data frame containing at least the Boolean variable `targeting` and the string `intended_target_name`:
@@ -38,7 +40,9 @@ guide_assignment_input['guide'].uns['moi'][0]
 ### Output
 
 ```{python, warning = FALSE}
-guide_assignment_output = md.read_h5mu("data/gasperini_guide_assignment_output_minimal.h5mu")
+guide_assignment_output = md.read_h5mu(
+  "data/guide_assignment/gasperini_guide_assignment_output_minimal.h5mu"
+)
 guide_assignment_output
 ```
 The minimal gRNA assignment output `MuData` object is the same as the input object, except it now has a `.layer` called `guide_assignment`, which is a binary assignment matrix of guides to cells.
@@ -48,7 +52,9 @@ The minimal gRNA assignment output `MuData` object is the same as the input obje
 ### Input
 
 ```{python, warning = FALSE}
-guide_assignment_input = md.read_h5mu("data/gasperini_guide_assignment_input.h5mu")
+guide_assignment_input = md.read_h5mu(
+  "data/guide_assignment/gasperini_guide_assignment_input.h5mu"
+)
 guide_assignment_input
 ```
 
@@ -78,7 +84,7 @@ guide_assignment_input['guide'].var.iloc[[0, 1, 20, 21, 30, 31]]
 
 Here is an example of a `MuData` object containing the minimal required fields for input to the inference module:
 ```{python, warning = FALSE}
-inference_input = md.read_h5mu("data/gasperini_inference_input_minimal.h5mu")
+inference_input = md.read_h5mu("data/inference/gasperini_inference_input_minimal.h5mu")
 inference_input
 ```
 This is the same as the minimal set of required fields for the output of the gRNA assignment module, except there is also a global `uns` called `pairs_to_test`:
@@ -90,7 +96,7 @@ The minimal required fields in `pairs_to_test` are `gene_id` and `intended_targe
 ### Output
 
 ```{python, warning = FALSE}
-inference_output = md.read_h5mu("data/gasperini_inference_output_minimal.h5mu")
+inference_output = md.read_h5mu("data/inference/gasperini_inference_output_minimal.h5mu")
 inference_output
 ```
 The minimal required fields in the output of the inference module are the same as the minimal required fields for the input, except there is an extra field in `uns` called `test_results`:
@@ -105,7 +111,7 @@ This is a data frame containing the same columns as the `pairs_to_test` data fra
 
 Here is an example of a `MuData` object containing some optional fields for input to the inference module:
 ```{python, warning = FALSE}
-inference_input = md.read_h5mu("data/gasperini_inference_input.h5mu")
+inference_input = md.read_h5mu("data/inference/gasperini_inference_input.h5mu")
 inference_input
 ```
 
@@ -119,7 +125,7 @@ Note the third column: `pair_type`. This optional column classifies pairs based 
 
 Here is an example of a `MuData` object containing some optional fields for output from the inference module:
 ```{python, warning = FALSE}
-inference_output = md.read_h5mu("data/gasperini_inference_output.h5mu")
+inference_output = md.read_h5mu("data/inference/gasperini_inference_output.h5mu")
 inference_output
 ```
 

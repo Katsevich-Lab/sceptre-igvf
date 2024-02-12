@@ -46,7 +46,7 @@ library(SummarizedExperiment)
 We start with an example of the minimal `MuData` object required for perturb-seq inference.
 
 ```{R, warning = FALSE}
-mudata_input_fp <- "data/gasperini_inference_input_minimal.h5mu"
+mudata_input_fp <- "data/inference/gasperini_inference_input_minimal.h5mu"
 input_minimal <- readH5MU(mudata_input_fp)
 input_minimal
 ```
@@ -105,7 +105,7 @@ metadata(input_minimal)$pairs_to_test |> as.data.frame() |> head()
 Next we consider optional fields that can be included in the input `MuData` object.
 
 ```{r, warning = FALSE}
-mudata_input_fp = "data/gasperini_inference_input.h5mu"
+mudata_input_fp = "data/inference/gasperini_inference_input.h5mu"
 input_optional = readH5MU(mudata_input_fp)
 input_optional
 ```
@@ -152,7 +152,7 @@ This optional column classifies pairs based on whether they are intended to be p
 
 The output should be the same `MuData` object as the input, with the addition of a `test_results` field to the global `metadata`:
 ```{r, warning = FALSE}
-mudata_output_fp <- "data/gasperini_inference_output.h5mu"
+mudata_output_fp <- "data/inference/gasperini_inference_output.h5mu"
 output_optional <- readH5MU(mudata_output_fp)
 output_optional
 ```
@@ -262,13 +262,13 @@ Here is a demonstration of this function on the Gasperini data:
 ```{r, warning = FALSE}
 # Compute Wilcoxon test on the Gasperini data
 compute_wilcoxon_test(
-  mudata_input_fp = "data/gasperini_inference_input.h5mu",
-  mudata_output_fp = "data/gasperini_inference_output_wilcoxon.h5mu",
+  mudata_input_fp = "data/inference/gasperini_inference_input.h5mu",
+  mudata_output_fp = "data/inference/gasperini_inference_output_wilcoxon.h5mu",
   side = "left"
 )
 
 # Read results from disk
-output_wilcoxon <- MuData::readH5MU("data/gasperini_inference_output_wilcoxon.h5mu")
+output_wilcoxon <- MuData::readH5MU("data/inference/gasperini_inference_output_wilcoxon.h5mu")
 
 # Print results
 metadata(output_wilcoxon)$test_results |> as.data.frame() |> head()
